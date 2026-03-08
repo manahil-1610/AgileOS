@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgileOS</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="app-shell">
+    <header class="topbar" aria-label="Top bar">
+      <div class="brand" aria-label="AgileOS brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text">
+          <div class="brand-name">AgileOS</div>
+          <div class="brand-subtitle">Agile planning + team wellbeing</div>
+        </div>
+      </div>
+
+      <nav class="top-actions" aria-label="Top actions">
+        <button class="btn btn-ghost" id="themeToggle" type="button" aria-pressed="true" aria-label="Switch theme">
+          Light mode
+        </button>
+
+        <button class="btn btn-ghost" type="button" aria-label="Open notifications">
+          Notifications
+        </button>
+
+        <button class="btn btn-primary" type="button" aria-label="Create new item">
+          New
+        </button>
+      </nav>
+    </header>
+
+    <main id="main" class="content" aria-label="Dashboard content">
+      <section class="hero" aria-label="Overview">
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle">
+            A premium, accessible overview of progress, capacity, and wellbeing.
+          </p>
+        </div>
+
+        <div class="kpi-row" aria-label="Key metrics">
+          <div class="kpi-card" role="group" aria-label="Progress KPI">
+            <div class="kpi-label">Progress</div>
+            <div class="kpi-value">68%</div>
+            <div class="progress" aria-label="Project progress">
+              <div class="progress-bar" style="width: 68%"></div>
+            </div>
+          </div>
+
+          <div class="kpi-card" role="group" aria-label="Velocity KPI">
+            <div class="kpi-label">Velocity</div>
+            <div class="kpi-value">42</div>
+            <div class="kpi-hint">story points / sprint</div>
+          </div>
+
+          <div class="kpi-card" role="group" aria-label="Risk KPI">
+            <div class="kpi-label">Risks</div>
+            <div class="kpi-value">3</div>
+            <div class="kpi-hint">needs attention</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid" aria-label="Main dashboard grid">
+
+        <!-- Add employee -->
+        <article class="card" aria-label="Add employee">
+          <header class="card-header">
+            <h2 class="card-title">Add employee</h2>
+            <p class="card-subtitle">This will be saved to the database</p>
+          </header>
+
+          <form class="pulse" method="POST" action="{{ url_for('add_employee') }}" aria-label="Add employee form">
+            <div class="field">
+              <label class="label" for="emp-name">Name</label>
+              <input id="emp-name" name="name" class="input" type="text" required placeholder="e.g. Manahil" />
+            </div>
+
+            <div class="field">
+              <label class="label" for="emp-note">Note</label>
+              <input id="emp-note" name="note" class="input" type="text" placeholder="e.g. Focused" />
+            </div>
+
+            <div class="field">
+              <label class="label" for="emp-capacity">Capacity (0–100)</label>
+              <input id="emp-capacity" name="capacity" class="input" type="number" min="0" max="100" value="50" />
+            </div>
+
+            <div class="field">
+              <label class="label" for="emp-mood">Mood</label>
+              <select id="emp-mood" name="mood" class="input" aria-label="Employee mood">
+                <option value="good">Good 🙂</option>
+                <option value="ok" selected>OK 😌</option>
+                <option value="warn">Tired 😴</option>
+              </select>
+            </div>
+
+            <button class="btn btn-primary" type="submit" aria-label="Add employee">
+              Add employee
+            </button>
+          </form>
+        </article>
+
+        <!-- Projects (DB-driven + team assignment) -->
+        <article class="card" aria-label="Projects">
+          <header class="card-header">
+            <h2 class="card-title">Projects</h2>
+            <p class="card-subtitle">Add projects and assign team members</p>
+          </header>
+
+          <form class="pulse" method="POST" action="{{ url_for('add_project') }}" aria-label="Add project form">
+            <div class="field">
+              <label class="label" for="proj-name">Project name</label>
+              <input id="proj-name" name="name" class="input" type="text" required placeholder="e.g. POS rollout" />
+            </div>
+
+            <div class="field">
+              <label class="label" for="proj-desc">Description</label>
+              <input id="proj-desc" name="description" class="input" type="text" placeholder="Short description" />
+            </div>
+
+            <div class="field">
+              <label class="label" for="proj-progress">Progress (0–100)</label>
+              <input id="proj-progress" name="progress" class="input" type="number" min="0" max="100" value="0" />
+            </div>
+
+            <button class="btn btn-primary" type="submit" aria-label="Add project">
+              Add project
+            </button>
+          </form>
+
+          <div style="height: 12px;"></div>
+
+          <div class="capacity" aria-label="Project list">
+            {% if projects and projects|length > 0 %}
+              {% for p in projects %}
+                <div class="cap-row" role="group" aria-label="{{ p.name }} progress {{ p.progress }}%">
+                  <div class="cap-left">
+                    <span class="dot" aria-hidden="true"></span>
+                    <span class="cap-name">{{ p.name }}</span>
+                  </div>
+
+                  <div class="cap-meter" aria-label="Project progress meter">
+                    <div class="cap-fill" style="width: {{ p.progress }}%"></div>
+                  </div>
+
+                  <div class="cap-value">{{ p.progress }}%</div>
+
+                  <form method="POST" action="{{ url_for('delete_project', project_id=p.id) }}">
+                    <button class="btn btn-ghost" type="submit" aria-label="Remove project">Remove</button>
+                  </form>
+                </div>
+
+                <!-- Assign employee to this project -->
+                <div class="pulse" style="margin-top: 10px;">
+                  {% if employees and employees|length > 0 %}
+                    <form method="POST" action="{{ url_for('add_employee_to_project', project_id=p.id) }}" aria-label="Add employee to project">
+                      <div class="field">
+                        <label class="label" for="assign-{{ p.id }}">Add team member</label>
+                        <select id="assign-{{ p.id }}" name="employee_id" class="input" aria-label="Select employee">
+                          {% for e in employees %}
+                            <option value="{{ e.id }}">{{ e.name }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <button class="btn btn-ghost" type="submit" aria-label="Add to project">
+                        Add to project
+                      </button>
+                    </form>
+                  {% else %}
+                    <div class="field">
+                      <div class="label">Add team member</div>
+                      <div class="person-note">Create an employee first.</div>
+                    </div>
+                  {% endif %}
+
+                  {% if p.employees and p.employees|length > 0 %}
+                    <div class="person-note" style="margin-top: 8px;">
+                      Team:
+                      {% for e in p.employees %}
+                        <span>{{ e.name }}</span>{% if not loop.last %}, {% endif %}
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div style="height: 14px;"></div>
+              {% endfor %}
+            {% else %}
+              <div class="cap-row" role="group" aria-label="No projects yet">
+                <div class="cap-left">
+                  <span class="cap-name">No projects yet</span>
+                </div>
+                <div class="cap-meter" aria-hidden="true">
+                  <div class="cap-fill" style="width: 0%"></div>
+                </div>
+                <div class="cap-value">—</div>
+              </div>
+            {% endif %}
+          </div>
+        </article>
+
+        <!-- Team status (DB-driven) -->
+        <article class="card" aria-label="Team wellbeing">
+          <header class="card-header">
+            <h2 class="card-title">Team status</h2>
+            <p class="card-subtitle">How the team feels today</p>
+          </header>
+
+          <div class="wellbeing">
+            <div class="wellbeing-score" aria-label="Team rating 8 out of 10">
+              <div class="score-number">8</div>
+              <div class="score-meta">/ 10</div>
+            </div>
+
+            <div class="wellbeing-list" aria-label="Team mood list">
+              {% if employees and employees|length > 0 %}
+                {% for e in employees %}
+                  <div class="person">
+                    <span class="avatar" aria-hidden="true">{{ e.name[:1] }}</span>
+
+                    <div class="person-info">
+                      <div class="person-name">{{ e.name }}</div>
+                      <div class="person-note">{{ e.note or "—" }}</div>
+                    </div>
+
+                    {% if e.mood == "good" %}
+                      <span class="pill pill-good" aria-label="Mood good">🙂</span>
+                    {% elif e.mood == "warn" %}
+                      <span class="pill pill-warn" aria-label="Mood tired">😴</span>
+                    {% else %}
+                      <span class="pill pill-ok" aria-label="Mood ok">😌</span>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('delete_employee', employee_id=e.id) }}">
+                      <button class="btn btn-ghost" type="submit" aria-label="Remove employee">Remove</button>
+                    </form>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="person">
+                  <div class="person-info">
+                    <div class="person-name">No employees yet</div>
+                    <div class="person-note">Add your first team member.</div>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </article>
+
+        <!-- Workload / capacity (DB-driven) -->
+        <article class="card" aria-label="Workload and capacity">
+          <header class="card-header">
+            <h2 class="card-title">Workload / capacity</h2>
+            <p class="card-subtitle">Visual indicators per team member</p>
+          </header>
+
+          <div class="capacity" aria-label="Capacity list">
+            {% if employees and employees|length > 0 %}
+              {% for e in employees %}
+                <div class="cap-row" role="group" aria-label="{{ e.name }} capacity {{ e.capacity }}%">
+                  <div class="cap-left">
+                    <span class="dot" aria-hidden="true"></span>
+                    <span class="cap-name">{{ e.name }}</span>
+                  </div>
+                  <div class="cap-meter" aria-label="Capacity meter">
+                    <div class="cap-fill" style="width: {{ e.capacity }}%"></div>
+                  </div>
+                  <div class="cap-value">{{ e.capacity }}%</div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="cap-row" role="group" aria-label="No capacity yet">
+                <div class="cap-left">
+                  <span class="cap-name">No team members yet</span>
+                </div>
+                <div class="cap-meter" aria-hidden="true">
+                  <div class="cap-fill" style="width: 0%"></div>
+                </div>
+                <div class="cap-value">—</div>
+              </div>
+            {% endif %}
+          </div>
+        </article>
+
+        <!-- Pulse check (demo for now) -->
+        <article class="card" aria-label="Pulse check">
+          <header class="card-header">
+            <h2 class="card-title">Pulse check</h2>
+            <p class="card-subtitle">Quick input (we’ll build this out)</p>
+          </header>
+
+          <form class="pulse" aria-label="Pulse form">
+            <div class="field">
+              <label class="label" for="energy">Energy</label>
+              <select id="energy" class="input" aria-label="Energy level">
+                <option>High</option>
+                <option selected>Medium</option>
+                <option>Low</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="label" for="blockers">Any blockers?</label>
+              <select id="blockers" class="input" aria-label="Blockers">
+                <option selected>No blockers</option>
+                <option>Some blockers</option>
+                <option>Major blockers</option>
+              </select>
+            </div>
+
+            <button class="btn btn-primary" type="button" aria-label="Submit pulse check">
+              Submit
+            </button>
+          </form>
+        </article>
+
+      </section>
+    </main>
+
+    <footer class="footer" aria-label="Footer">
+      <span>© AgileOS</span>
+      <span class="footer-muted">Accessible • Minimal • Premium</span>
+    </footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
